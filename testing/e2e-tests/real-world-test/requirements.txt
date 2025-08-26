@@ -1,0 +1,25 @@
+# Core dependencies with known vulnerabilities (realistic scenario)
+Flask==1.0.2              # Multiple security vulnerabilities
+requests==2.20.0          # Known CVEs 
+Werkzeug==0.14.1          # Security issues
+Jinja2==2.10.0            # Template injection vulnerabilities
+SQLAlchemy==1.2.12        # Outdated with security issues
+Pillow==6.2.0             # Image processing vulnerabilities
+cryptography==2.3.0      # Cryptographic vulnerabilities
+PyJWT==1.6.4             # JWT handling issues
+
+# Development tools (outdated)
+pytest==4.6.5            # Old version
+coverage==4.5.4          # Outdated
+
+# Utility libraries  
+click==7.0                # CLI tool
+python-dotenv==0.10.3     # Environment variables
+itsdangerous==1.1.0      # Security token generation (outdated)
+
+# Database
+psycopg2-binary==2.7.7    # PostgreSQL adapter (outdated)
+
+# Additional vulnerable packages
+PyYAML==3.13              # Known deserialization issues
+urllib3==1.24.2           # HTTP library vulnerabilities

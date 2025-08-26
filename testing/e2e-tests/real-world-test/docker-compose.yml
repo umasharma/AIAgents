@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"  # Security issue: exposing on all interfaces
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=hardcoded-compose-secret  # Hardcoded secret
+      - DATABASE_URL=postgresql://admin:password123@db:5432/tasktracker
+    volumes:
+      - .:/app  # Security issue: mounting entire directory
+      - /tmp:/tmp  # Security issue: mounting host /tmp
+    depends_on:
+      - db
+      - redis
+    # Security issue: running as root (no user specified)
+
+  db:
+    image: postgres:11  # Outdated version with vulnerabilities
+    environment:
+      - POSTGRES_DB=tasktracker
+      - POSTGRES_USER=admin  # Weak username
+      - POSTGRES_PASSWORD=password123  # Weak password
+    ports:
+      - "5432:5432"  # Security issue: exposing database port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Potentially unsafe
+
+  redis:
+    image: redis:5-alpine  # Outdated version
+    ports:
+      - "6379:6379"  # Security issue: exposing Redis port
+    # Security issue: no password configured
+    command: redis-server --requirepass ""  # No password
+
+  # Unused services (dead configuration)
+  unused_service:
+    image: nginx:1.16  # Outdated
+    ports:
+      - "8080:80"
+    # This service is defined but never used
+
+volumes:
+  postgres_data:
