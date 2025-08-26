@@ -8,15 +8,10 @@ import datetime
 import uuid
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import json
 import pickle
 
 # Unused imports
-import os
-import sys
-import logging
-import tempfile
 
 Base = declarative_base()
 

@@ -2,7 +2,6 @@
 Configuration file with hardcoded secrets and insecure settings.
 """
 
-import os
 
 class Config:
     """Base configuration class."""
