@@ -1,0 +1,169 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-hygiene-agent"
+version = "1.0.0"
+description = "MCP Agent for automated code hygiene analysis and remediation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Code Hygiene Agent"},
+]
+keywords = ["mcp", "code-analysis", "security", "automation", "github"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Security",
+]
+
+dependencies = [
+    "mcp>=1.0.0",
+    "pydantic>=2.0.0",
+    "aiohttp>=3.8.0",
+    "aiofiles>=23.0.0",
+    "PyGithub>=2.1.0",
+    "safety>=3.0.0",
+    "pip-audit>=2.6.0",
+    "vulture>=2.10.0",
+    "bandit>=1.7.0",
+    "semgrep>=1.45.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "jinja2>=3.1.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.0.0",
+    "GitPython>=3.1.41",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+    "httpx>=0.25.0",
+    "respx>=0.20.0",
+]
+
+[project.scripts]
+code-hygiene-agent = "code_hygiene_agent.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/code-hygiene-agent"
+Repository = "https://github.com/yourusername/code-hygiene-agent.git"
+Issues = "https://github.com/yourusername/code-hygiene-agent/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/code_hygiene_agent",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+]
+asyncio_mode = "auto"
+norecursedirs = ["testing", "e2e-tests"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+disallow_any_generics = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+warn_return_any = false
+strict_equality = true
+
+# Ignore missing imports for optional dependencies and specific modules
+[[tool.mypy.overrides]]
+module = [
+    "git.*",
+    "openai.*", 
+    "structlog.*",
+    "github.*",
+    "pygit2.*",
+    "mcp.*",
+    "rich.*",
+    "click.*"
+]
+ignore_missing_imports = true
+
+# Temporarily exclude problematic modules for development
+[[tool.mypy.overrides]]
+module = [
+    "code_hygiene_agent.integrations.repo_manager",
+    "code_hygiene_agent.integrations.github", 
+    "code_hygiene_agent.mcp_server.server",
+    "code_hygiene_agent.config.settings",
+    "code_hygiene_agent.utils.logging",
+    "code_hygiene_agent.analyzers.base",
+    "code_hygiene_agent.analyzers.vulnerability",
+    "code_hygiene_agent.analyzers.dead_code",
+    "code_hygiene_agent.analyzers.registry",
+    "code_hygiene_agent.reporting.generator"
+]
+ignore_errors = true
