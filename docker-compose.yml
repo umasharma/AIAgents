@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  code-hygiene-agent:
+    build:
+      context: .
+      target: production
+    container_name: code-hygiene-agent
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_OWNER=${GITHUB_OWNER}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MAX_CONCURRENT_SCANS=${MAX_CONCURRENT_SCANS:-3}
+      - ANALYSIS_TIMEOUT=${ANALYSIS_TIMEOUT:-300}
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      # Mount project to analyze
+      - ${PROJECT_PATH:-./sample-project}:/workspace:ro
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - hygiene-network
+
+  code-hygiene-dev:
+    build:
+      context: .
+      target: development
+    container_name: code-hygiene-agent-dev
+    environment:
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_OWNER=${GITHUB_OWNER}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - .:/app
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ${PROJECT_PATH:-./sample-project}:/workspace
+    ports:
+      - "3001:3000"
+    command: code-hygiene-agent serve
+    networks:
+      - hygiene-network
+    profiles:
+      - dev
+
+  # Optional: Redis for caching (future enhancement)
+  redis:
+    image: redis:7-alpine
+    container_name: code-hygiene-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - hygiene-network
+    profiles:
+      - with-redis
+
+  # Optional: Postgres for persistent storage (future enhancement)
+  postgres:
+    image: postgres:15-alpine
+    container_name: code-hygiene-postgres
+    environment:
+      - POSTGRES_DB=code_hygiene
+      - POSTGRES_USER=hygiene
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hygiene_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - hygiene-network
+    profiles:
+      - with-postgres
+
+  # Test service for running tests in isolated environment
+  test:
+    build:
+      context: .
+      target: development
+    container_name: code-hygiene-test
+    environment:
+      - LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app/src
+      # Mock credentials for testing
+      - GITHUB_TOKEN=fake_token_for_testing
+      - GITHUB_OWNER=test_owner
+      - GITHUB_REPO=test_repo
+      - OPENAI_API_KEY=fake_key_for_testing
+    volumes:
+      - .:/app
+    command: pytest -v
+    networks:
+      - hygiene-network
+    profiles:
+      - test
+
+networks:
+  hygiene-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:

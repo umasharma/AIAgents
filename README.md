@@ -131,8 +131,133 @@ LOG_LEVEL=INFO
 # Start MCP server
 python -m src.code_hygiene_agent.mcp_server.server
 
-# Or run demo
-python demo_github_analysis.py
+# Or use CLI interface
+python -m src.code_hygiene_agent.cli --help
+```
+
+---
+
+## 🧪 **Testing Guide**
+
+### **1. Quick Verification Tests**
+```bash
+# Install the package
+pip install -e .
+
+# Run all tests to verify installation
+pytest tests/ -v
+
+# Check tool availability
+python -c "
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneAgent
+agent = CodeHygieneAgent()
+print('✅ MCP Server loads successfully')
+"
+```
+
+### **2. Test Individual Components**
+```bash
+# Test analyzer registry
+python -c "
+from src.code_hygiene_agent.analyzers.registry import AnalyzerRegistry
+registry = AnalyzerRegistry()
+print('Available analyzers:', registry.get_enabled_analyzers())
+"
+
+# Test GitHub integration (requires token)
+export GITHUB_TOKEN=your_token_here
+python -c "
+from src.code_hygiene_agent.integrations.github import GitHubIntegrator
+integrator = GitHubIntegrator()
+print('✅ GitHub integration ready')
+"
+```
+
+### **3. Test with Real Project**
+```bash
+# Clone a test repository
+git clone https://github.com/python/cpython /tmp/test-repo
+
+# Run local analysis
+python -c "
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneAgent
+
+async def test_analysis():
+    agent = CodeHygieneAgent()
+    result = await agent.analyze_project('/tmp/test-repo', 
+                                        analyzers=['dead_code'], 
+                                        create_pr=False)
+    print(f'Analysis found {result[\"total_issues\"]} issues')
+    return result
+
+result = asyncio.run(test_analysis())
+"
+```
+
+### **4. Test MCP Tools**
+```bash
+# Test tool availability check
+python -c "
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneServer
+
+async def test_tools():
+    server = CodeHygieneServer()
+    result = await server._handle_check_analyzer_availability({})
+    print('Tool availability:', result)
+
+asyncio.run(test_tools())
+"
+```
+
+### **5. End-to-End GitHub Test**
+```bash
+# Set required environment variables
+export GITHUB_TOKEN=ghp_your_token_here
+
+# Test GitHub repository analysis
+python -c "
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneServer
+
+async def test_github():
+    server = CodeHygieneServer()
+    result = await server._handle_analyze_github_repository({
+        'repo_url': 'https://github.com/umasharma/code_hygiene_agent',
+        'create_pr': False,  # Set to True to create actual PR
+        'analyzers': ['dead_code']
+    })
+    print('GitHub analysis result:', result['analysis']['total_issues'])
+
+asyncio.run(test_github())
+"
+```
+
+### **6. Performance Test**
+```bash
+# Test with performance monitoring
+python -c "
+import time
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneAgent
+
+async def performance_test():
+    agent = CodeHygieneAgent()
+    start_time = time.time()
+    
+    result = await agent.analyze_project('.', 
+                                        analyzers=['dead_code'], 
+                                        create_pr=False)
+    
+    duration = time.time() - start_time
+    print(f'Analysis took {duration:.2f}s')
+    print(f'Found {result[\"total_issues\"]} issues')
+    print(f'Performance: {result[\"total_issues\"]/duration:.1f} issues/second')
+
+asyncio.run(performance_test())
+"
 ```
 
 ---
@@ -231,19 +356,26 @@ python demo_github_analysis.py
 
 #### **Testing Commands:**
 ```bash
-# Run all tests
+# Run all tests (50 tests total)
 pytest tests/ -v
 
-# Run specific test categories
-pytest tests/unit/ -v            # Unit tests
-pytest tests/integration/ -v     # Integration tests
-pytest tests/performance/ -v     # Performance tests
+# Run specific test categories  
+pytest tests/unit/ -v            # Unit tests only (44 tests)
+pytest tests/integration/ -v     # Integration tests only (6 tests)
 
-# Run with coverage
-pytest --cov=src/code_hygiene_agent --cov-report=html
+# Run with coverage reporting
+pytest tests/ --cov=src/code_hygiene_agent --cov-report=html
 
-# Test with real repositories
-python -m pytest tests/e2e/ --github-token=$GITHUB_TOKEN
+# Test specific components
+pytest tests/unit/test_analyzers.py -v      # Test analyzers (25 tests)
+pytest tests/unit/test_integrations.py -v   # Test GitHub integration (10 tests)  
+pytest tests/unit/test_reporting.py -v      # Test report generation (9 tests)
+
+# Quick verification (skip slow integration tests)
+pytest tests/unit/ -v
+
+# Test with verbose output and timing
+pytest tests/ -v --durations=10
 ```
 
 ### **🔒 Security Considerations**
@@ -371,14 +503,64 @@ Horizontal Scaling:
 # Enable debug logging
 export LOG_LEVEL=DEBUG
 
-# Test tool availability
-python -c "from src.code_hygiene_agent.analyzers.registry import AnalyzerRegistry; print(AnalyzerRegistry().get_available_analyzers())"
+# Check tool availability
+python -c "
+from src.code_hygiene_agent.analyzers.registry import AnalyzerRegistry
+registry = AnalyzerRegistry()
+print('Enabled analyzers:', registry.get_enabled_analyzers())
+for name, analyzer in registry.analyzers.items():
+    print(f'{name}: enabled={analyzer.enabled}')
+"
 
-# Test GitHub connectivity
-python -c "from src.code_hygiene_agent.integrations.github import GitHubIntegrator; print(GitHubIntegrator().test_connection())"
+# Test individual analyzers
+python -c "
+import asyncio
+from src.code_hygiene_agent.analyzers.dead_code import DeadCodeAnalyzer
+
+async def test_analyzer():
+    analyzer = DeadCodeAnalyzer()
+    print(f'Analyzer: {analyzer.name}')
+    print(f'Required tools: {analyzer.required_tools}')
+    print(f'Supported files: {analyzer.supported_file_types}')
+    print(f'Enabled: {analyzer.enabled}')
+
+asyncio.run(test_analyzer())
+"
 
 # Validate configuration
-python -c "from src.code_hygiene_agent.config.settings import settings; print(settings.dict())"
+python -c "
+from src.code_hygiene_agent.config.settings import settings
+print('Configuration:')
+print(f'  Log Level: {settings.log_level}')
+print(f'  GitHub configured: {bool(settings.github.token)}')
+print(f'  OpenAI configured: {bool(settings.openai.api_key)}')
+"
+
+# Test MCP server startup
+python -c "
+import asyncio
+from src.code_hygiene_agent.mcp_server.server import CodeHygieneAgent
+
+async def test_startup():
+    try:
+        agent = CodeHygieneAgent()
+        print('✅ MCP Server initialized successfully')
+        
+        # Test tool availability
+        availability = await agent.check_tool_availability()
+        print('Tool availability:')
+        for analyzer, tools in availability.items():
+            for tool, available in tools.items():
+                status = '✅' if available else '❌'
+                print(f'  {status} {analyzer}.{tool}')
+                
+    except Exception as e:
+        print(f'❌ Error: {e}')
+        import traceback
+        traceback.print_exc()
+
+asyncio.run(test_startup())
+"
 ```
 
 ---
