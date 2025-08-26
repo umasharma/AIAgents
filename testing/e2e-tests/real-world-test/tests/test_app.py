@@ -8,15 +8,8 @@ import tempfile
 import os
 import sys
 import datetime
-import subprocess
 
 # Unused imports
-import math
-import random
-import string
-import collections
-import itertools
-import hashlib
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

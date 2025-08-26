@@ -4,30 +4,17 @@ This represents a realistic web application with common issues.
 """
 
 import os
-import sys
-import json
 import pickle
 import hashlib
 import subprocess
-import tempfile
 import datetime
-import sqlite3
-import logging
 import uuid
 import base64
 
 # Unused imports that should be flagged
-import math
-import random
-import time
-import collections
 from functools import wraps
 
-from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for
-from werkzeug.utils import secure_filename
-import requests
 import jwt
-from cryptography.fernet import Fernet
 import yaml
 
 # Initialize Flask app

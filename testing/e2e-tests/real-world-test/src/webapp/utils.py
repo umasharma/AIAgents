@@ -3,12 +3,8 @@ Utility functions with various code quality issues.
 """
 
 import os
-import json
-import hashlib
 import requests
 import subprocess
-import tempfile
-import logging
 import datetime
 import re
 import base64
@@ -16,11 +12,6 @@ import yaml
 import xml.etree.ElementTree as ET
 
 # Unused imports
-import math
-import random
-import string
-import collections
-import itertools
 
 
 def unused_string_utilities():
