@@ -486,8 +486,8 @@ This pull request contains automated improvements to the codebase based on stati
             )
 
             # Ensure title and body are properly encoded
-            safe_title = title.encode('ascii', errors='replace').decode('ascii')
-            safe_body = pr_body.encode('ascii', errors='replace').decode('ascii')
+            safe_title = title.encode("ascii", errors="replace").decode("ascii")
+            safe_body = pr_body.encode("ascii", errors="replace").decode("ascii")
 
             # Create the PR
             pr = github_repo.create_pull(
@@ -549,13 +549,11 @@ This PR contains automated fixes based on code hygiene analysis.
                 indicator = {
                     "critical": "[CRITICAL]",
                     "high": "[HIGH]",
-                    "medium": "[MEDIUM]", 
+                    "medium": "[MEDIUM]",
                     "low": "[LOW]",
                     "info": "[INFO]",
                 }
-                body += (
-                    f"- {indicator.get(severity, '•')} **{severity.title()}**: {count}\n"
-                )
+                body += f"- {indicator.get(severity, '•')} **{severity.title()}**: {count}\n"
 
         body += "\n### Issues by Category\n"
         for category, count in category_counts.items():
